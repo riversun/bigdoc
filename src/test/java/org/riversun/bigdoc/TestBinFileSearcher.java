@@ -38,7 +38,8 @@ import org.riversun.bigdoc.bin.BinFileSearcher;
 
 /**
  * test for BigFileSearcher
- *@author Tom Misawa (riversun.org@gmail.com)
+ *
+ * @author Tom Misawa (riversun.org@gmail.com)
  *
  */
 public class TestBinFileSearcher extends TestBase {
@@ -261,4 +262,48 @@ public class TestBinFileSearcher extends TestBase {
 
 	}
 
+	@Test
+	public void test_indexOf_from_the_first() {
+
+		final String testText = "rejoice";
+		final byte[] searchBytes = getFromUTF8(testText);
+
+		final BinFileSearcher obj = new BinFileSearcher();
+
+		final File file = getFileFromResource("Coriolanus.txt");
+
+		final Long result = obj.indexOf(file, searchBytes);
+
+		assertEquals((long) result, 15667L);
+	}
+
+	@Test
+	public void test_indexOf_from_the_first_no_occurence() {
+
+		final String testText = "ABCDEFG";
+		final byte[] searchBytes = getFromUTF8(testText);
+
+		final BinFileSearcher obj = new BinFileSearcher();
+
+		final File file = getFileFromResource("Coriolanus.txt");
+
+		final Long result = obj.indexOf(file, searchBytes);
+
+		assertEquals((long) result, -1L);
+	}
+
+	@Test
+	public void test_indexOf_from_the_mid() {
+
+		final String testText = "rejoice";
+		final byte[] searchBytes = getFromUTF8(testText);
+
+		final BinFileSearcher obj = new BinFileSearcher();
+
+		final File file = getFileFromResource("Coriolanus.txt");
+
+		final Long result = obj.indexOf(file, searchBytes, 100000);
+
+		assertEquals((long) result, 164920L);
+	}
 }

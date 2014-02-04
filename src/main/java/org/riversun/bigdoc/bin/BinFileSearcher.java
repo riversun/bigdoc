@@ -93,7 +93,8 @@ public class BinFileSearcher {
 	 *            a sequence of bytes you want to find
 	 * @param fromPosition
 	 *            "0" means the beginning of the file
-	 * @return
+	 * @return position of the first occurence. '-1' means that it was not
+	 *         found.
 	 */
 	public Long indexOf(File f, byte[] searchBytes, long fromPosition) {
 
@@ -111,7 +112,12 @@ public class BinFileSearcher {
 				}
 			}
 		});
-		return result.get(0);
+
+		if (result.size() > 0) {
+			return result.get(0);
+		} else {
+			return -1L;
+		}
 	}
 
 	/**
