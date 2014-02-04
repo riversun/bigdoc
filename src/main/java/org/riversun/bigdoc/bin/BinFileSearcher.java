@@ -105,7 +105,7 @@ public class BinFileSearcher {
 	 * 
 	 * @param subBufferSize
 	 */
-	public void subBufferSize(int subBufferSize) {
+	public void setSubBufferSize(int subBufferSize) {
 		this.subBufferSize = subBufferSize;
 	}
 
