@@ -45,21 +45,48 @@ public class BinFileSearcher {
 
 	private static final boolean USE_NIO = true;
 
-	public static interface BigFileProgressListener {
+	private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
+
+	private static final int DEFAULT_SUB_BUFFER_SIZE = 512;
+
+	private static final int DEFAULT_SUB_THREAD_SIZE = 32;
+
+	public static interface BinFileProgressListener {
 		public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead);
 	}
 
-	private boolean mLoopInprogress = true;
+	private boolean isLoopInprogress = true;
+	private BinFileProgressListener bigFileProgressListener;
 
-	// DEFAULT 1 mega bytes
-	private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
+	private int bufferSize = DEFAULT_BUFFER_SIZE;
+	private int subThreadSize = DEFAULT_SUB_THREAD_SIZE;
+	private int subBufferSize = DEFAULT_SUB_BUFFER_SIZE;
 
-	private BigFileProgressListener mBigFileProgressListener;
-
-	private int mBufferSize = DEFAULT_BUFFER_SIZE;
-
+	/**
+	 * Size to be read into memory at one search
+	 * 
+	 * @param bufferSize
+	 */
 	public void setBufferSize(int bufferSize) {
-		this.mBufferSize = bufferSize;
+		this.bufferSize = bufferSize;
+	}
+
+	/**
+	 * Number of threads used at the same time in one search
+	 * 
+	 * @param subThreadSize
+	 */
+	public void setSubThreadSize(int subThreadSize) {
+		this.subThreadSize = subThreadSize;
+	}
+
+	/**
+	 * The size of the window used to scan memory
+	 * 
+	 * @param subBufferSize
+	 */
+	public void subBufferSize(int subBufferSize) {
+		this.subBufferSize = subBufferSize;
 	}
 
 	/**
@@ -67,8 +94,8 @@ public class BinFileSearcher {
 	 * 
 	 * @param listener
 	 */
-	public void setBigFileProgressListener(BigFileProgressListener listener) {
-		mBigFileProgressListener = listener;
+	public void setBigFileProgressListener(BinFileProgressListener listener) {
+		bigFileProgressListener = listener;
 	}
 
 	/**
@@ -98,13 +125,13 @@ public class BinFileSearcher {
 	 */
 	public Long indexOf(File f, byte[] searchBytes, long fromPosition) {
 
-		final List<Long> result = searchPartially(f, searchBytes, fromPosition, -1, new BigFileProgressListener() {
+		final List<Long> result = searchPartially(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
 
 			@Override
 			public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead) {
 
-				if (mBigFileProgressListener != null) {
-					mBigFileProgressListener.onProgress(pointerList, progress, currentPosition, startPosition, maxSizeToRead);
+				if (bigFileProgressListener != null) {
+					bigFileProgressListener.onProgress(pointerList, progress, currentPosition, startPosition, maxSizeToRead);
 				}
 
 				if (pointerList.size() > 0) {
@@ -151,13 +178,16 @@ public class BinFileSearcher {
 		return searchPartially(f, searchBytes, startPosition, maxSizeToRead, null);
 	}
 
-	private List<Long> searchPartially(File f, byte[] searchBytes, long startPosition, long maxSizeToRead, BigFileProgressListener listener) {
+	private List<Long> searchPartially(File f, byte[] searchBytes, long startPosition, long maxSizeToRead, BinFileProgressListener listener) {
 
 		final List<Long> pointerList = new ArrayList<Long>();
 
-		mLoopInprogress = true;
+		isLoopInprogress = true;
 
 		final BigBinarySearcher bbs = new BigBinarySearcher();
+
+		bbs.setMaxNumOfThreads(subThreadSize);
+		bbs.setBufferSize(subBufferSize);
 
 		final boolean hasReadingLimit = (maxSizeToRead > 0);
 
@@ -191,16 +221,16 @@ public class BinFileSearcher {
 			ByteBuffer nioByteBuf = null;
 
 			if (USE_NIO) {
-				nioByteBuf = ByteBuffer.allocate(mBufferSize);
+				nioByteBuf = ByteBuffer.allocate(bufferSize);
 			}
 
-			if (searchBytes.length > mBufferSize) {
+			if (searchBytes.length > bufferSize) {
 				throw new RuntimeException("The length of the target bytes is less than bufferSize.Please set more bigger bufferSize.");
 			}
 
 			final int byteShiftForSearch = (searchBytes.length - 1);
 
-			while (mLoopInprogress) {
+			while (isLoopInprogress) {
 
 				raf.seek(offsetPos);
 
@@ -215,13 +245,13 @@ public class BinFileSearcher {
 					if (nioByteBuf.hasArray()) {
 						byteBuf = nioByteBuf.array();
 					} else {
-						byteBuf = new byte[mBufferSize];
+						byteBuf = new byte[bufferSize];
 						// transfer bytes from nioByteBuf into byteBuf
 						nioByteBuf.get(byteBuf);
 					}
 
 				} else {
-					byteBuf = new byte[mBufferSize];
+					byteBuf = new byte[bufferSize];
 					actualBytesRead = raf.read(byteBuf);
 
 				}
@@ -256,7 +286,7 @@ public class BinFileSearcher {
 				}
 
 				else {
-					if (actualBytesRead != mBufferSize) {
+					if (actualBytesRead != bufferSize) {
 
 						bufForSearch = new byte[actualBytesRead];
 						if (USE_NIO) {
@@ -294,7 +324,7 @@ public class BinFileSearcher {
 				long bytesRemain = (endPosition + 1) - offsetPos;
 
 				if (listener == null) {
-					listener = mBigFileProgressListener;
+					listener = bigFileProgressListener;
 				}
 				if (listener != null) {
 					float progress = (float) offsetPos / (float) endPosition;
@@ -304,7 +334,7 @@ public class BinFileSearcher {
 				if (bytesRemain == byteShiftForSearch) {
 
 					if (listener == null) {
-						listener = mBigFileProgressListener;
+						listener = bigFileProgressListener;
 					}
 					if (listener != null) {
 						float progress = 1.0f;
@@ -353,6 +383,6 @@ public class BinFileSearcher {
 	 * Stop searching bytes
 	 */
 	public void stop() {
-		mLoopInprogress = false;
+		isLoopInprogress = false;
 	}
 }
