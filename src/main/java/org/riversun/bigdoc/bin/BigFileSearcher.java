@@ -446,13 +446,17 @@ public class BigFileSearcher {
 		if (bufferSize > 4 * 1024 * 1024) {
 			bufferSize = 4 * 1024 * 1024;
 		}
-		int iBufferSize = (int) bufferSize;
 
 		long blockSize = fileLength / workerSize;
 		if (blockSize > 16 * 1024 * 1024) {
 			blockSize = 16 * 1024 * 1024;
 		}
 		int iBlockSize = (int) blockSize;
+
+		if (bufferSize > blockSize) {
+			bufferSize = blockSize;
+		}
+		int iBufferSize = (int) bufferSize;
 
 		this.setBlockSize(iBlockSize);
 		this.setMaxNumOfThreads(workerSize);
