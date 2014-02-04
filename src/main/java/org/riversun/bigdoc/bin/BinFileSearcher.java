@@ -45,10 +45,19 @@ public class BinFileSearcher {
 
 	private static final boolean USE_NIO = true;
 
+	/**
+	 * Default size to be read into memory at one search
+	 */
 	public static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
 
+	/**
+	 * Default number of threads used at the same time in one search
+	 */
 	public static final int DEFAULT_SUB_BUFFER_SIZE = 512;
 
+	/**
+	 * Dfault size of the window used to scan memory
+	 */
 	public static final int DEFAULT_SUB_THREAD_SIZE = 32;
 
 	public static interface BinFileProgressListener {
@@ -58,12 +67,23 @@ public class BinFileSearcher {
 	private boolean isLoopInprogress = true;
 	private BinFileProgressListener bigFileProgressListener;
 
+	/**
+	 * Size to be read into memory at one search
+	 */
 	private int bufferSize = DEFAULT_BUFFER_SIZE;
+
+	/**
+	 * Number of threads used at the same time in one search
+	 */
 	private int subThreadSize = DEFAULT_SUB_THREAD_SIZE;
+
+	/**
+	 * The size of the window used to scan memory
+	 */
 	private int subBufferSize = DEFAULT_SUB_BUFFER_SIZE;
 
 	/**
-	 * Size to be read into memory at one search
+	 * Set size to be read into memory at one search
 	 * 
 	 * @param bufferSize
 	 */
@@ -72,7 +92,7 @@ public class BinFileSearcher {
 	}
 
 	/**
-	 * Number of threads used at the same time in one search
+	 * Set number of threads used at the same time in one search
 	 * 
 	 * @param subThreadSize
 	 */
@@ -81,7 +101,7 @@ public class BinFileSearcher {
 	}
 
 	/**
-	 * The size of the window used to scan memory
+	 * Set the size of the window used to scan memory
 	 * 
 	 * @param subBufferSize
 	 */
