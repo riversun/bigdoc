@@ -45,11 +45,11 @@ public class BinFileSearcher {
 
 	private static final boolean USE_NIO = true;
 
-	private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
+	public static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
 
-	private static final int DEFAULT_SUB_BUFFER_SIZE = 512;
+	public static final int DEFAULT_SUB_BUFFER_SIZE = 512;
 
-	private static final int DEFAULT_SUB_THREAD_SIZE = 32;
+	public static final int DEFAULT_SUB_THREAD_SIZE = 32;
 
 	public static interface BinFileProgressListener {
 		public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead);
