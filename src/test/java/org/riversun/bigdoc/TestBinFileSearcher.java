@@ -34,14 +34,14 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.riversun.bigdoc.bin.BigFileSearcher;
+import org.riversun.bigdoc.bin.BinFileSearcher;
 
 /**
  * test for BigFileSearcher
  *@author Tom Misawa (riversun.org@gmail.com)
  *
  */
-public class TestBigFileSearcher extends TestBase {
+public class TestBinFileSearcher extends TestBase {
 
 	@Before
 	public void setUp() throws Exception {
@@ -57,7 +57,7 @@ public class TestBigFileSearcher extends TestBase {
 		final String testText = "rejoice";
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 
@@ -76,7 +76,7 @@ public class TestBigFileSearcher extends TestBase {
 
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 
@@ -110,7 +110,7 @@ public class TestBigFileSearcher extends TestBase {
 
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 
@@ -152,7 +152,7 @@ public class TestBigFileSearcher extends TestBase {
 
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 
@@ -193,7 +193,7 @@ public class TestBigFileSearcher extends TestBase {
 
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 
@@ -222,7 +222,7 @@ public class TestBigFileSearcher extends TestBase {
 
 		final byte[] searchBytes = getFromUTF8(testText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		final BinFileSearcher obj = new BinFileSearcher();
 
 		final File file = getFileFromResource("Coriolanus.txt");
 

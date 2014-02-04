@@ -30,27 +30,40 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.riversun.finbin.BigBinarySearcher;
 
 /**
- * Search sequence of bytes from BIG file<br>
+ * Search sequence of bytes from Binary file<br>
  * 
  * @author Tom Misawa (riversun.org@gmail.com)
  *
  */
-public class BigFileSearcher {
+public class BinFileSearcher {
 
 	private static final boolean USE_NIO = true;
 
+	public static interface BigFileProgressListener {
+		public void onProgress(List<Long> pointerList, float progress, float currentPos, float startPos, long readSize);
+	}
+
 	private boolean mLoopInprogress = true;
+
+	// DEFAULT 1 mega bytes
 	private static final int DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024;
+
+	private BigFileProgressListener mBigFileProgressListener;
 
 	private int mBufferSize = DEFAULT_BUFFER_SIZE;
 
 	public void setBufferSize(int bufferSize) {
 		this.mBufferSize = bufferSize;
+	}
+
+	public void setBigFileProgressListener(BigFileProgressListener listener) {
+		mBigFileProgressListener = listener;
 	}
 
 	public void read(File f, byte[] searchBytes) {
@@ -60,7 +73,27 @@ public class BigFileSearcher {
 		// -1 means read until the end
 		final long readSize = -1;
 
-		searchPartially(f, searchBytes, startPos, readSize);
+		searchPartially(f, searchBytes, startPos, readSize, null);
+	}
+
+	
+	public Long indexOf(File f, byte[] searchBytes, long fromIndex) {
+
+		final List<Long> result = searchPartially(f, searchBytes, fromIndex, -1, new BigFileProgressListener() {
+
+			@Override
+			public void onProgress(List<Long> pointerList, float progress, float currentPos, float startPos, long readSize) {
+
+				if (mBigFileProgressListener != null) {
+					mBigFileProgressListener.onProgress(pointerList, progress, currentPos, startPos, readSize);
+				}
+
+				if (pointerList.size() > 0) {
+					BinFileSearcher.this.stopSearching();
+				}
+			}
+		});
+		return result.get(0);
 	}
 
 	public List<Long> search(File f, byte[] searchBytes) {
@@ -68,6 +101,10 @@ public class BigFileSearcher {
 	}
 
 	public List<Long> searchPartially(File f, byte[] searchBytes, long startPos, long readSize) {
+		return searchPartially(f, searchBytes, startPos, readSize, null);
+	}
+
+	public List<Long> searchPartially(File f, byte[] searchBytes, long startPos, long readSize, BigFileProgressListener listener) {
 
 		final List<Long> pointerList = new ArrayList<Long>();
 
@@ -116,7 +153,7 @@ public class BigFileSearcher {
 
 			final int byteShiftForSearch = (searchBytes.length - 1);
 
-			while (mLoopInprogress) {
+			loop: while (mLoopInprogress) {
 
 				raf.seek(offsetPos);
 
@@ -168,7 +205,6 @@ public class BigFileSearcher {
 
 					} else {
 						System.arraycopy(byteBuf, 0, bufForSearch, 0, iValidReadingSize);
-
 					}
 				}
 
@@ -200,6 +236,7 @@ public class BigFileSearcher {
 				for (Integer relPointer : relPointerList) {
 					long absolutePointer = (long) relPointer.intValue() + offsetPos;
 					pointerList.add((Long) absolutePointer);
+
 				}
 
 				// The reason of "- byteShiftForSearch".Read followings.
@@ -209,7 +246,24 @@ public class BigFileSearcher {
 
 				long bytesRemain = (endPos + 1) - offsetPos;
 
+				if (listener == null) {
+					listener = mBigFileProgressListener;
+				}
+				if (listener != null) {
+					float progress = (float) offsetPos / (float) endPos;
+					listener.onProgress(pointerList, progress, offsetPos, startPos, endPos);
+				}
+
 				if (bytesRemain == byteShiftForSearch) {
+
+					if (listener == null) {
+						listener = mBigFileProgressListener;
+					}
+					if (listener != null) {
+						float progress = 1.0f;
+						listener.onProgress(pointerList, progress, offsetPos, startPos, endPos);
+					}
+
 					break;
 				}
 			}
@@ -227,6 +281,28 @@ public class BigFileSearcher {
 			}
 
 		}
+
+		sort(pointerList);
+
 		return pointerList;
+	}
+
+	protected void sort(List<Long> list) {
+
+		list.sort(new Comparator<Long>() {
+
+			public int compare(Long num1, Long num2) {
+				if (num1 > num2) {
+					return 1;
+				} else if (num1 < num2) {
+					return -1;
+				}
+				return 0;
+			}
+		});
+	}
+
+	public void stopSearching() {
+		mLoopInprogress = false;
 	}
 }
