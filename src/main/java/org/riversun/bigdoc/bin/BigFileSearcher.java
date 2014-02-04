@@ -305,9 +305,9 @@ public class BigFileSearcher {
 			final long readLeng;
 
 			if (i == numOfThreads - 1) {
-				
+
 				// if it's the last element.
-				readLeng = sizeOfSrcBytes - offset ;
+				readLeng = sizeOfSrcBytes - offset;
 			} else {
 				// else , add the overlapping part size to blockSize
 				readLeng = bytesToReadBlockSize + sizeOfSearchBytes;
@@ -448,12 +448,15 @@ public class BigFileSearcher {
 			}
 		}
 
+		// This is now only for realtime result callback interface.
+		// So now not need to be thinking of multi thread but ready for multi
+		// threading.
 		List<Long> getResultPointers() {
 			resultPointerList.clear();
 			for (int i = 0; i < this.pointerList.length; i++) {
 				resultPointerList.addAll(this.pointerList[i]);
 			}
-			// TODO sort if needed
+			// TODO add sort if needed
 			return resultPointerList;
 		}
 
