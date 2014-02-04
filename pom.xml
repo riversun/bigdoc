@@ -5,7 +5,7 @@
 
 	<groupId>org.riversun</groupId>
 	<artifactId>bigdoc</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0</version>
 	<packaging>jar</packaging>
 	<name>bigdoc</name>
 	<description>Hi-speed search for a byte sequence in a big byte array.
@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>org.riversun</groupId>
 			<artifactId>finbin</artifactId>
-			<version>0.6.1</version>
+			<version>0.6.2</version>
 		</dependency>
 	</dependencies>
 
