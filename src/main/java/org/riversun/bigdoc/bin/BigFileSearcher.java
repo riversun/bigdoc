@@ -44,8 +44,12 @@ import org.riversun.bigdoc.bin.BinFileSearcher.BinFileProgressListener;
  */
 public class BigFileSearcher {
 
-	public static interface BigFileProgressListener {
+	public static interface OnProgressListener {
 		public void onProgress(float progress);
+	}
+
+	public static interface OnRealtimeResultListener {
+		public void onRealtimeResultListener(float progress, List<Long> pointerList);
 	}
 
 	private interface BinFileProgressListenerEx {
@@ -92,23 +96,15 @@ public class BigFileSearcher {
 	/**
 	 * Size per unit when divide loading big sized file into multiple pieces<br>
 	 */
-	private int blockSize = DEFAULT_BLOCK_SIZE;
+	private long blockSize = DEFAULT_BLOCK_SIZE;
 
 	private int maxNumOfThreads = DEFAULT_MAX_NUM_OF_THREADS;
 
-	private BigFileProgressListener bigFileProgressListener;
+	private OnProgressListener onProgressListener;
+	private OnRealtimeResultListener onRealtimeResultListener;
 
 	private long _profile_lastStartTime;
 	private long _profile_lastEndTime;
-
-	/**
-	 * Set progress listener
-	 * 
-	 * @param listener
-	 */
-	public void setBigFileProgressListener(BigFileProgressListener listener) {
-		this.bigFileProgressListener = listener;
-	}
 
 	/**
 	 * Set size per unit when divide loading big sized file into multiple pieces<br>
@@ -118,7 +114,7 @@ public class BigFileSearcher {
 	 * 
 	 * @param blockSize
 	 */
-	public void setBlockSize(int blockSize) {
+	public void setBlockSize(long blockSize) {
 		this.blockSize = blockSize;
 	}
 
@@ -198,13 +194,63 @@ public class BigFileSearcher {
 	}
 
 	/**
-	 * Search bytes faster in a concurrent processing.
+	 * Search bytes from big file faster with realtime result callback<br>
+	 * <br>
+	 * This callbacks the result in real time, but since the concurrency is
+	 * inferior to #searchBigFile,so the execution speed is slower than
+	 * #searchBigFile
+	 * 
+	 * @param srcFile
+	 * @param searchBytes
+	 * @param listener
+	 */
+	public List<Long> searchBigFileRealtime(File srcFile, byte[] searchBytes, OnRealtimeResultListener listener) {
+
+		this.onRealtimeResultListener = listener;
+		this.onProgressListener = null;
+
+		int numOfThreadsOptimized = (int) (srcFile.length() / blockSize);
+
+		if (numOfThreadsOptimized == 0) {
+			numOfThreadsOptimized = 1;
+		}
+
+		final long fileLen = srcFile.length();
+
+		// optimize before calling the method
+		optimize(fileLen);
+
+		setMaxNumOfThreads(1);
+		setBlockSize(fileLen);
+
+		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, false);
+	}
+
+	/**
+	 * Search bytes from big file faster in a concurrent processing with
+	 * progress callback
 	 * 
 	 * @param srcBytes
 	 * @param searchBytes
 	 * @return
 	 */
 	public List<Long> searchBigFile(File srcFile, byte[] searchBytes) {
+		return searchBigFile(srcFile, searchBytes, null);
+	}
+
+	/**
+	 * Search bytes from big file faster in a concurrent processing with
+	 * progress callback
+	 * 
+	 * @param srcFile
+	 * @param searchBytes
+	 * @param listener
+	 * @return
+	 */
+	public List<Long> searchBigFile(File srcFile, byte[] searchBytes, OnProgressListener listener) {
+
+		this.onRealtimeResultListener = null;
+		this.onProgressListener = listener;
 
 		int numOfThreadsOptimized = (int) (srcFile.length() / (long) blockSize);
 
@@ -212,7 +258,7 @@ public class BigFileSearcher {
 			numOfThreadsOptimized = 1;
 		}
 
-		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized);
+		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, this.useOptimization);
 	}
 
 	/**
@@ -223,7 +269,9 @@ public class BigFileSearcher {
 	 * @param numOfThreads
 	 * @return
 	 */
-	private List<Long> searchBigFile(File srcFile, byte[] searchBytes, int numOfThreads) {
+	private List<Long> searchBigFile(File srcFile, byte[] searchBytes, int numOfThreads, boolean useOptimization) {
+
+		progressCache = null;
 
 		if (useOptimization) {
 			optimize(srcFile.length());
@@ -257,6 +305,7 @@ public class BigFileSearcher {
 			final long readLeng;
 
 			if (i == numOfThreads - 1) {
+				// TODO FIX delete -1
 				// if it's the last element.
 				readLeng = sizeOfSrcBytes - offset - 1;
 			} else {
@@ -266,9 +315,10 @@ public class BigFileSearcher {
 
 			final BinFileProgressListenerEx progressListener;
 
-			if (bigFileProgressListener == null) {
+			if (onProgressListener == null && onRealtimeResultListener == null) {
 				progressListener = null;
 			} else {
+
 				progressListener = new BinFileProgressListenerEx() {
 
 					@Override
@@ -368,16 +418,43 @@ public class BigFileSearcher {
 	final static class ProgressCache {
 
 		volatile float[] progress;
+		volatile List<Long>[] pointerList;
 
+		final List<Long> resultPointerList = new ArrayList<Long>();
+
+		final boolean useResultCache;
 		final int workerSize;
 
-		ProgressCache(int workerSize) {
+		@SuppressWarnings("unchecked")
+		ProgressCache(int workerSize, boolean useResultCache) {
 			this.workerSize = workerSize;
 			this.progress = new float[workerSize];
+
+			this.useResultCache = useResultCache;
+
+			if (useResultCache) {
+				this.pointerList = new CopyOnWriteArrayList[workerSize];
+			}
 		}
 
-		synchronized void setProgress(int workerNumber, float progress) {
+		synchronized void setProgress(int workerNumber, float progress, List<Long> pointerList) {
 			this.progress[workerNumber] = progress;
+			if (useResultCache) {
+				if (this.pointerList[workerNumber] == null) {
+					this.pointerList[workerNumber] = new CopyOnWriteArrayList<Long>();
+				}
+				this.pointerList[workerNumber].clear();
+				this.pointerList[workerNumber].addAll(pointerList);
+			}
+		}
+
+		List<Long> getResultPointers() {
+			resultPointerList.clear();
+			for (int i = 0; i < this.pointerList.length; i++) {
+				resultPointerList.addAll(this.pointerList[i]);
+			}
+			// TODO sort if needed
+			return resultPointerList;
 		}
 
 		float getProgress() {
@@ -390,12 +467,21 @@ public class BigFileSearcher {
 	}
 
 	// Call from each worker thread
-	private void onProgress(int workerNumber, int workerSize, List<Long> pointerList, float progress) {
+	private void onProgress(final int workerNumber, final int workerSize, final List<Long> pointerList, final float progress) {
+
 		if (progressCache == null) {
-			progressCache = new ProgressCache(workerSize);
+			progressCache = new ProgressCache(workerSize, (onRealtimeResultListener != null));
 		}
-		progressCache.setProgress(workerNumber, progress);
-		bigFileProgressListener.onProgress(progressCache.getProgress());
+
+		progressCache.setProgress(workerNumber, progress, pointerList);
+
+		if (onProgressListener != null) {
+			onProgressListener.onProgress(progressCache.getProgress());
+		}
+
+		if (onRealtimeResultListener != null) {
+			onRealtimeResultListener.onRealtimeResultListener(progressCache.getProgress(), progressCache.getResultPointers());
+		}
 	}
 
 	/**
