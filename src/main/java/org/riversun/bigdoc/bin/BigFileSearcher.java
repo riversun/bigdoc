@@ -305,9 +305,9 @@ public class BigFileSearcher {
 			final long readLeng;
 
 			if (i == numOfThreads - 1) {
-				// TODO FIX delete -1
+				
 				// if it's the last element.
-				readLeng = sizeOfSrcBytes - offset - 1;
+				readLeng = sizeOfSrcBytes - offset ;
 			} else {
 				// else , add the overlapping part size to blockSize
 				readLeng = bytesToReadBlockSize + sizeOfSearchBytes;
