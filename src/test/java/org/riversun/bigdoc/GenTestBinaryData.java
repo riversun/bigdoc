@@ -38,7 +38,7 @@ public class GenTestBinaryData {
 	public static void main(String[] args) {
 
 		// please edit
-		final int size = 5 * 1024 * 1024;
+		final int size = 5 * 1024 * 1024 - 5;
 
 		// please edit
 		final String filepath = "src/test/resources/bigdoc_bigfile_test_5mbyte.bin";
@@ -55,6 +55,9 @@ public class GenTestBinaryData {
 			BinaryUtil.memcopy(testBinary, textBytes, i);
 		}
 
+		// place text at last.
+		BinaryUtil.memcopy(testBinary, textBytes, testBinary.length - textBytes.length);
+		
 		// save to file
 		BinaryUtil.saveBytesToFile(testBinary, new File(filepath));
 

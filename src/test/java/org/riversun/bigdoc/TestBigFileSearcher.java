@@ -72,7 +72,7 @@ public class TestBigFileSearcher extends TestBase {
 		System.out.println("[" + name.getMethodName() + "] Profile Information");
 		obj._showProfile();
 
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
@@ -100,7 +100,7 @@ public class TestBigFileSearcher extends TestBase {
 			}
 		});
 		obj._showProfile();
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
@@ -129,7 +129,7 @@ public class TestBigFileSearcher extends TestBase {
 			}
 		});
 		obj._showProfile();
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
