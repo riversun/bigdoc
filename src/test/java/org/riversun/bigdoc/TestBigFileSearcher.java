@@ -59,7 +59,7 @@ public class TestBigFileSearcher extends TestBase {
 	@Test
 	public void test_search() {
 
-		final String searchText = "hello world";
+		final String searchText = "hello world.";
 
 		final byte[] searchBytes = getFromUTF8(searchText);
 
@@ -81,7 +81,7 @@ public class TestBigFileSearcher extends TestBase {
 	@Test
 	public void test_search_with_progress_callback() {
 
-		final String searchText = "hello world";
+		final String searchText = "hello world.";
 
 		final byte[] searchBytes = getFromUTF8(searchText);
 
@@ -110,7 +110,7 @@ public class TestBigFileSearcher extends TestBase {
 	@Test
 	public void test_searchBigFileRealtime() {
 
-		final String searchText = "hello world";
+		final String searchText = "hello world.";
 
 		final byte[] searchBytes = getFromUTF8(searchText);
 
