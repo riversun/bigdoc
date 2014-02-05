@@ -44,6 +44,7 @@ import org.riversun.finbin.BigBinarySearcher;
 public class BinFileSearcher {
 
 	private static final boolean USE_NIO = true;
+	private static final boolean USE_NIO_DIRECT_BUFFER = false;
 
 	/**
 	 * Default size to be read into memory at one search
@@ -238,10 +239,14 @@ public class BinFileSearcher {
 
 			long offsetPos = startPosition;
 
-			ByteBuffer nioByteBuf = null;
+			final ByteBuffer nioByteBuf;
 
 			if (USE_NIO) {
-				nioByteBuf = ByteBuffer.allocate(bufferSize);
+				if (USE_NIO_DIRECT_BUFFER) {
+					nioByteBuf = ByteBuffer.allocateDirect(bufferSize);
+				} else {
+					nioByteBuf = ByteBuffer.allocate(bufferSize);
+				}
 			}
 
 			if (searchBytes.length > bufferSize) {
@@ -267,6 +272,7 @@ public class BinFileSearcher {
 					} else {
 						byteBuf = new byte[bufferSize];
 						// transfer bytes from nioByteBuf into byteBuf
+						nioByteBuf.rewind();
 						nioByteBuf.get(byteBuf);
 					}
 
@@ -309,6 +315,7 @@ public class BinFileSearcher {
 					if (actualBytesRead != bufferSize) {
 
 						bufForSearch = new byte[actualBytesRead];
+
 						if (USE_NIO) {
 
 							// set pos to first,set limit to pointer of

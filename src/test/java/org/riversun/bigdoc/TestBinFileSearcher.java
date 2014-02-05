@@ -44,6 +44,9 @@ import org.riversun.bigdoc.bin.BinFileSearcher;
  */
 public class TestBinFileSearcher extends TestBase {
 
+	private static final long FIRST_OCCURENCE = 15199L;// 15667L as CRLF;
+	private static final long SECOND_OCCURENCE = 159845L;// 164920L as CRLF;
+
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -64,7 +67,7 @@ public class TestBinFileSearcher extends TestBase {
 
 		final List<Long> result = obj.search(file, searchBytes);
 
-		assertThat(result, contains(15667L, 164920L));
+		assertThat(result, contains(FIRST_OCCURENCE, SECOND_OCCURENCE));
 	}
 
 	/**
@@ -83,9 +86,7 @@ public class TestBinFileSearcher extends TestBase {
 
 		final List<Long> result = obj.search(file, searchBytes);
 
-		int[] bufSizes = {
-				testText.length(),
-				100,
+		int[] bufSizes = { testText.length(), 100,
 				// prime numbers
 				101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157,
 				// kilo bytes
@@ -95,12 +96,11 @@ public class TestBinFileSearcher extends TestBase {
 				// around of target file size
 				(int) file.length() - 1, (int) file.length() + 1,
 				// mega bytes
-				1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024
-		};
+				1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024 };
 
 		for (int bufSize : bufSizes) {
 			obj.setBufferSize(bufSize);
-			assertThat(result, contains(15667L, 164920L));
+			assertThat(result, contains(FIRST_OCCURENCE, SECOND_OCCURENCE));
 		}
 
 	}
@@ -119,30 +119,30 @@ public class TestBinFileSearcher extends TestBase {
 
 		// check if contains (readSize is just)
 		{
-			final long readSize = 15667L + testText.length();
+			final long readSize = FIRST_OCCURENCE + testText.length();
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			assertThat(result, (contains(15667L)));
+			assertThat(result, (contains(FIRST_OCCURENCE)));
 		}
 
 		// check if contains (readSize is enough)
 		{
-			final long readSize = 15667L + testText.length() + 100;
+			final long readSize = FIRST_OCCURENCE + testText.length() + 100;
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			assertThat(result, (contains(15667L)));
+			assertThat(result, (contains(FIRST_OCCURENCE)));
 		}
 
 		// check if "NOT" contains(readSize is not enough)
 		{
 			// "-1" makes readSize not enough;
-			final long readSize = 15667L + testText.length() - 1;
+			final long readSize = FIRST_OCCURENCE + testText.length() - 1;
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			assertThat(result, not(contains(15667L)));
+			assertThat(result, not(contains(FIRST_OCCURENCE)));
 		}
 
 	}
@@ -160,30 +160,31 @@ public class TestBinFileSearcher extends TestBase {
 		// check if contains (target bytes stars with startPos)
 		{
 
-			// 15667L means where target bytes stars with.
-			final long startPos = 15667L;
+			// FIRST_OCCURENCE means where target bytes stars with.
+			final long startPos = FIRST_OCCURENCE;
 
 			// means enough size to read
 			final long readSize = file.length();
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			assertThat(result, (contains(15667L, 164920L)));
+			assertThat(result, (contains(FIRST_OCCURENCE, SECOND_OCCURENCE)));
 		}
 
 		// check if "NOT" contains
 		{
 
-			// 15667L+1 means after target bytes of the first "rejoice" in the
+			// FIRST_OCCURENCE+1 means after target bytes of the first "rejoice" in
+			// the
 			// file.
-			final long startPos = 15667L + 1;
+			final long startPos = FIRST_OCCURENCE + 1;
 
 			// means enough size to read
 			final long readSize = file.length();
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			assertThat(result, (contains(164920L)));
+			assertThat(result, (contains(SECOND_OCCURENCE)));
 		}
 
 	}
@@ -201,9 +202,10 @@ public class TestBinFileSearcher extends TestBase {
 		// check if "NOT" contains
 		{
 
-			// 15667L+1 means after target bytes of the first "rejoice" in the
+			// FIRST_OCCURENCE+1 means after target bytes of the first "rejoice" in
+			// the
 			// file.
-			final long startPos = 15667L + 1;
+			final long startPos = FIRST_OCCURENCE + 1;
 
 			// means not enough size to read
 			final long readSize = 1000;
@@ -236,9 +238,7 @@ public class TestBinFileSearcher extends TestBase {
 
 			final List<Long> result = obj.searchPartially(file, searchBytes, startPos, readSize);
 
-			int[] bufSizes = {
-					testText.length(),
-					100,
+			int[] bufSizes = { testText.length(), 100,
 					// prime numbers
 					101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157,
 					// kilo bytes
@@ -250,12 +250,11 @@ public class TestBinFileSearcher extends TestBase {
 					// around of target file size
 					(int) file.length() - 1, (int) file.length() + 1,
 					// mega bytes
-					1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024
-			};
+					1024 * 1024, 2 * 1024 * 1024, 4 * 1024 * 1024 };
 
 			for (int bufSize : bufSizes) {
 				obj.setBufferSize(bufSize);
-				assertThat(result, (contains(164920L)));
+				assertThat(result, (contains(SECOND_OCCURENCE)));
 
 			}
 		}
@@ -274,7 +273,7 @@ public class TestBinFileSearcher extends TestBase {
 
 		final Long result = obj.indexOf(file, searchBytes);
 
-		assertEquals((long) result, 15667L);
+		assertEquals((long) result, FIRST_OCCURENCE);
 	}
 
 	@Test
@@ -304,6 +303,6 @@ public class TestBinFileSearcher extends TestBase {
 
 		final Long result = obj.indexOf(file, searchBytes, 100000);
 
-		assertEquals((long) result, 164920L);
+		assertEquals((long) result, SECOND_OCCURENCE);
 	}
 }
