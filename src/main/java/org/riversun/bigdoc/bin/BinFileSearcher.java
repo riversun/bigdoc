@@ -267,9 +267,12 @@ public class BinFileSearcher {
 					nioByteBuf.clear();
 					actualBytesRead = inChannel.read(nioByteBuf);
 
+					//if wrapped
 					if (nioByteBuf.hasArray()) {
 						byteBuf = nioByteBuf.array();
-					} else {
+					}
+					//if using direct buffer
+					else {
 						byteBuf = new byte[bufferSize];
 						// transfer bytes from nioByteBuf into byteBuf
 						nioByteBuf.rewind();
