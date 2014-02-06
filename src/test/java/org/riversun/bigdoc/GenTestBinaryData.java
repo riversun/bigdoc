@@ -1,6 +1,6 @@
-/*  finbin - Hi-speed search byte[] data from big byte[]
+/*  bigdoc Java lib for easy to read/search from a big document
  *
- *  Copyright (c) 2015 Tom Misawa(riversun.org@gmail.com)
+ *  Copyright (c) 2006-2016 Tom Misawa, riversun.org@gmail.com
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
