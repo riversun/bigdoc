@@ -205,6 +205,23 @@ public class BigFileSearcher {
 	 * @param listener
 	 */
 	public List<Long> searchBigFileRealtime(File srcFile, byte[] searchBytes, OnRealtimeResultListener listener) {
+		return searchBigFileRealtime(srcFile, searchBytes, 0, listener);
+	}
+
+	/**
+	 * * Search bytes from big file faster with realtime result callback<br>
+	 * <br>
+	 * This callbacks the result in real time, but since the concurrency is
+	 * inferior to #searchBigFile,so the execution speed is slower than
+	 * #searchBigFile
+	 * 
+	 * @param srcFile
+	 * @param searchBytes
+	 * @param startPosition
+	 * @param listener
+	 * @return
+	 */
+	public List<Long> searchBigFileRealtime(File srcFile, byte[] searchBytes, long startPosition, OnRealtimeResultListener listener) {
 
 		this.onRealtimeResultListener = listener;
 		this.onProgressListener = null;
@@ -223,7 +240,7 @@ public class BigFileSearcher {
 		setMaxNumOfThreads(1);
 		setBlockSize(fileLen);
 
-		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, false);
+		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, false, startPosition);
 	}
 
 	/**
@@ -258,18 +275,20 @@ public class BigFileSearcher {
 			numOfThreadsOptimized = 1;
 		}
 
-		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, this.useOptimization);
+		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, this.useOptimization, 0);
 	}
 
 	/**
 	 * Search bytes faster in a concurrent processing with concurrency level.
 	 * 
-	 * @param srcBytes
+	 * @param srcFile
 	 * @param searchBytes
 	 * @param numOfThreads
+	 * @param useOptimization
+	 * @param startPosition
 	 * @return
 	 */
-	private List<Long> searchBigFile(File srcFile, byte[] searchBytes, int numOfThreads, boolean useOptimization) {
+	private List<Long> searchBigFile(File srcFile, byte[] searchBytes, int numOfThreads, boolean useOptimization, long startPosition) {
 
 		progressCache = null;
 
@@ -301,7 +320,7 @@ public class BigFileSearcher {
 
 		for (int i = 0; i < numOfThreads; i++) {
 
-			final long offset = bytesToReadBlockSize * (long) i;
+			final long offset = bytesToReadBlockSize * (long) i + startPosition;
 			final long readLeng;
 
 			if (i == numOfThreads - 1) {
@@ -503,16 +522,16 @@ public class BigFileSearcher {
 	public void _showProfile() {
 		System.out.println("availableProcessors=" + Runtime.getRuntime().availableProcessors() + " free memory=" + getMegaBytes(Runtime.getRuntime().freeMemory()));
 		System.out.println(
-					"worker blockSize=" + getMegaBytes(blockSize) + " " +
-							"worker buffer Size=" + getMegaBytes(bufferSizePerWorker) + ", " +
-							"max num of thread=" + maxNumOfThreads + ", " +
-							"sub buffer size=" + subBufferSize + "(B)" + ", " +
-							"sub thread size=" + subThreadSize + ", "
-					);
+				"worker blockSize=" + getMegaBytes(blockSize) + " " +
+						"worker buffer Size=" + getMegaBytes(bufferSizePerWorker) + ", " +
+						"max num of thread=" + maxNumOfThreads + ", " +
+						"sub buffer size=" + subBufferSize + "(B)" + ", " +
+						"sub thread size=" + subThreadSize + ", "
+				);
 
 		System.out.println("possible max thread=" + maxNumOfThreads * subThreadSize + " " +
 				"possible max memory=" + getMegaBytes(bufferSizePerWorker * maxNumOfThreads + (subBufferSize * subThreadSize))
-					);
+				);
 	}
 
 	/**

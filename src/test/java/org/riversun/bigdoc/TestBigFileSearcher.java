@@ -72,7 +72,7 @@ public class TestBigFileSearcher extends TestBase {
 		System.out.println("[" + name.getMethodName() + "] Profile Information");
 		obj._showProfile();
 
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L, 5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
@@ -100,7 +100,7 @@ public class TestBigFileSearcher extends TestBase {
 			}
 		});
 		obj._showProfile();
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L, 5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
@@ -129,10 +129,37 @@ public class TestBigFileSearcher extends TestBase {
 			}
 		});
 		obj._showProfile();
-		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L,5242863L));
+		assertThat(result, contains(0L, 1022976L, 2045952L, 3068928L, 4091904L, 5114880L, 5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
 	}
 
+	@Test
+	public void test_searchBigFileRealtime_from_mid() {
+
+		final String searchText = "hello world.";
+		final long startPos = 2040000L;
+		final byte[] searchBytes = getFromUTF8(searchText);
+
+		final BigFileSearcher obj = new BigFileSearcher();
+
+		final File srcFile = getFileFromResource("bigdoc_bigfile_test_5mbyte.bin");
+
+		System.out.println("[" + name.getMethodName() + "] Profile Information");
+
+		final List<Long> result = obj.searchBigFileRealtime(srcFile, searchBytes, startPos, new OnRealtimeResultListener() {
+
+			@Override
+			public void onRealtimeResultListener(float progress, List<Long> pointerList) {
+				System.out.println("[" + name.getMethodName() + "]" + " progress " + (int) (progress * 100f) + "% done result=" + pointerList);
+
+			}
+		});
+		obj._showProfile();
+		assertThat(result, contains(2045952L, 3068928L, 4091904L, 5114880L, 5242863L));
+		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
+				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
+		System.out.println();
+	}
 }
