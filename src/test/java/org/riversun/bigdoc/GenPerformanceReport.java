@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import org.riversun.bigdoc.bin.BigFileSearcher;
 import org.riversun.finbin.BinaryUtil;
@@ -63,7 +64,7 @@ public class GenPerformanceReport {
 
 	private static final String TEXT = "hello world.";
 
-	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100,250 };
+	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100, 250, 1000 };
 
 	public void execPerformanceTest() {
 
@@ -79,7 +80,9 @@ public class GenPerformanceReport {
 			final File srcFile = new File(getTestDataFilePath(sizeMB));
 
 			log("Testing... " + sizeMB + "MB " + srcFile);
-			obj.searchBigFile(srcFile, searchBytes);
+			List<Long> searchBigFile = obj.searchBigFile(srcFile, searchBytes);
+			boolean is_result_correct = searchBigFile.size() == (1 + sizeMB * 1024 * 1024 / (5 * 1024 * 1024));
+			log("success ="+is_result_correct);
 			obj.setUseOptimization(true);
 			log("Condition");
 			obj._showProfile();
@@ -125,11 +128,7 @@ public class GenPerformanceReport {
 
 		final byte[] buffer;
 
-		if (fileSizeMB >= 500) {
-			buffer = new byte[50 * 1024 * 1024];
-		} else {
-			buffer = new byte[5 * 1024 * 1024];
-		}
+		buffer = new byte[5 * 1024 * 1024];
 
 		BinaryUtil.memcopy(buffer, testBinary, 0);
 

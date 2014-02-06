@@ -148,21 +148,41 @@ public class BinFileSearcher {
 	 */
 	public Long indexOf(File f, byte[] searchBytes, long fromPosition) {
 
-		final List<Long> result = searchPartiallyUsingNIO(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
+		final List<Long> result;
+		if (USE_NIO) {
 
-			@Override
-			public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead) {
+			result = searchPartiallyUsingNIO(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
 
-				if (bigFileProgressListener != null) {
-					bigFileProgressListener.onProgress(pointerList, progress, currentPosition, startPosition, maxSizeToRead);
+				@Override
+				public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead) {
+
+					if (bigFileProgressListener != null) {
+						bigFileProgressListener.onProgress(pointerList, progress, currentPosition, startPosition, maxSizeToRead);
+					}
+
+					if (pointerList.size() > 0) {
+						BinFileSearcher.this.stop();
+					}
 				}
+			});
 
-				if (pointerList.size() > 0) {
-					BinFileSearcher.this.stop();
+		} else {
+
+			result = searchPartiallyUsingLegacy(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
+
+				@Override
+				public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead) {
+
+					if (bigFileProgressListener != null) {
+						bigFileProgressListener.onProgress(pointerList, progress, currentPosition, startPosition, maxSizeToRead);
+					}
+
+					if (pointerList.size() > 0) {
+						BinFileSearcher.this.stop();
+					}
 				}
-			}
-		});
-
+			});
+		}
 		if (result.size() > 0) {
 			return result.get(0);
 		} else {
