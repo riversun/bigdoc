@@ -532,13 +532,13 @@ public class BigFileSearcher {
 		}
 
 		long bufferSize = free / workerSize;
-		if (bufferSize > 4 * 1024 * 1024) {
-			bufferSize = 4 * 1024 * 1024;
+		if (bufferSize > 1 * 1024 * 1024) {
+			bufferSize = 1 * 1024 * 1024;
 		}
 
 		long blockSize = fileLength / workerSize;
-		if (blockSize > 16 * 1024 * 1024) {
-			blockSize = 16 * 1024 * 1024;
+		if (blockSize > 1 * 1024 * 1024) {
+			blockSize = 1 * 1024 * 1024;
 		}
 		int iBlockSize = (int) blockSize;
 

@@ -43,7 +43,10 @@ import org.riversun.finbin.BigBinarySearcher;
  */
 public class BinFileSearcher {
 
-	private static final boolean USE_NIO = true;
+	/*
+	 * Prepare for NIO(ByteBuffer,MappedByteBuffer) for future "finbin" updates
+	 */
+	public static final boolean USE_NIO = true;
 	private static final boolean USE_NIO_DIRECT_BUFFER = false;
 
 	/**
@@ -267,11 +270,11 @@ public class BinFileSearcher {
 					nioByteBuf.clear();
 					actualBytesRead = inChannel.read(nioByteBuf);
 
-					//if wrapped
+					// if wrapped
 					if (nioByteBuf.hasArray()) {
 						byteBuf = nioByteBuf.array();
 					}
-					//if using direct buffer
+					// if using direct buffer
 					else {
 						byteBuf = new byte[bufferSize];
 						// transfer bytes from nioByteBuf into byteBuf
