@@ -28,7 +28,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -43,11 +46,7 @@ import org.riversun.finbin.BigBinarySearcher;
  */
 public class BinFileSearcher {
 
-	/*
-	 * Prepare for NIO(ByteBuffer,MappedByteBuffer) for future "finbin" updates
-	 */
-	public static final boolean USE_NIO = true;
-	private static final boolean USE_NIO_DIRECT_BUFFER = false;
+	private static final boolean USE_NIO = true;
 
 	/**
 	 * Default size to be read into memory at one search
@@ -149,7 +148,7 @@ public class BinFileSearcher {
 	 */
 	public Long indexOf(File f, byte[] searchBytes, long fromPosition) {
 
-		final List<Long> result = searchPartially(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
+		final List<Long> result = searchPartiallyUsingNIO(f, searchBytes, fromPosition, -1, new BinFileProgressListener() {
 
 			@Override
 			public void onProgress(List<Long> pointerList, float progress, float currentPosition, float startPosition, long maxSizeToRead) {
@@ -199,10 +198,172 @@ public class BinFileSearcher {
 	 * @return
 	 */
 	public List<Long> searchPartially(File f, byte[] searchBytes, long startPosition, long maxSizeToRead) {
-		return searchPartially(f, searchBytes, startPosition, maxSizeToRead, null);
+		if (USE_NIO) {
+			return searchPartiallyUsingNIO(f, searchBytes, startPosition, maxSizeToRead, null);
+		} else {
+			return searchPartiallyUsingLegacy(f, searchBytes, startPosition, maxSizeToRead, null);
+		}
 	}
 
-	private List<Long> searchPartially(File f, byte[] searchBytes, long startPosition, long maxSizeToRead, BinFileProgressListener listener) {
+	protected List<Long> searchPartiallyUsingNIO(File f, byte[] searchBytes, long startPosition, long maxSizeToRead, BinFileProgressListener listener) {
+
+		final List<Long> pointerList = new ArrayList<Long>();
+
+		isLoopInprogress = true;
+
+		final BigBinarySearcher bbs = new BigBinarySearcher();
+
+		bbs.setMaxNumOfThreads(subThreadSize);
+		bbs.setBufferSize(subBufferSize);
+
+		final boolean hasReadingLimit = (maxSizeToRead > 0);
+
+		FileChannel readChannel = null;
+
+		try {
+
+			readChannel = FileChannel.open(Paths.get(f.getAbsolutePath()), StandardOpenOption.READ);
+
+			final long targetFileSize = readChannel.size();
+
+			if (startPosition < 0 || startPosition > targetFileSize) {
+				throw new RuntimeException("StartPos is invalid.");
+			}
+
+			final long endPosition;
+
+			if (hasReadingLimit) {
+				if (startPosition + maxSizeToRead > targetFileSize) {
+					endPosition = targetFileSize - 1;
+				} else {
+					endPosition = startPosition + maxSizeToRead - 1;
+				}
+
+			} else {
+				endPosition = targetFileSize - 1;
+			}
+
+			long offsetPos = startPosition;
+
+			final int byteShiftForSearch = (searchBytes.length - 1);
+
+			final int actualBufferSize = (int) Math.min(bufferSize, targetFileSize);
+
+			if (searchBytes.length > actualBufferSize) {
+				throw new RuntimeException("The length of the target bytes is less than bufferSize.Please set more bigger bufferSize.");
+			}
+
+			MappedByteBuffer mappedByteBuffer = null;
+
+			byte buf[] = new byte[actualBufferSize];
+
+			while (isLoopInprogress) {
+
+				final int bytesToBeRead = (int) Math.min(actualBufferSize, targetFileSize - offsetPos);
+
+				mappedByteBuffer = readChannel.map(FileChannel.MapMode.READ_ONLY, offsetPos, bytesToBeRead);
+
+				mappedByteBuffer.get(buf, 0, bytesToBeRead);
+
+				final byte[] bufForSearch;
+
+				final int bytesToBeEatByBigBinSearcher;
+
+				if (hasReadingLimit && ((offsetPos + bytesToBeRead) >= endPosition + 1)) {
+
+					// When reading is over compared with the set readingLimit
+
+					final long lValidReadingSize = (endPosition + 1) - offsetPos;
+
+					final int iValidReadingSize = (int) lValidReadingSize;
+
+					bufForSearch = new byte[iValidReadingSize];
+
+					bytesToBeEatByBigBinSearcher = iValidReadingSize;
+
+					// set pos to first
+					mappedByteBuffer.rewind();
+
+					// transfer bytes from nioByteBuf into bufForSearch
+					mappedByteBuffer.get(bufForSearch, 0, iValidReadingSize);
+
+				}
+
+				else {
+					if (bytesToBeRead != actualBufferSize) {
+
+						bufForSearch = new byte[bytesToBeRead];
+
+						// set pos to first,set limit to pointer of
+						// bytesRead
+						mappedByteBuffer.flip();
+
+						// transfer bytes from nioByteBuf into bufForSearch
+						mappedByteBuffer.get(bufForSearch);
+
+					} else {
+						bufForSearch = buf;
+					}
+					bytesToBeEatByBigBinSearcher = bytesToBeRead;
+				}
+
+				final List<Integer> relPointerList = bbs.searchBigBytes(bufForSearch, searchBytes);
+
+				for (Integer relPointer : relPointerList) {
+					long absolutePointer = (long) relPointer.intValue() + offsetPos;
+					pointerList.add((Long) absolutePointer);
+
+				}
+
+				// The reason of "- byteShiftForSearch".Read followings.
+				// In order to read the value which straddles between the buffer
+				// and buffer.
+				offsetPos += bytesToBeEatByBigBinSearcher - byteShiftForSearch;
+
+				long bytesRemain = (endPosition + 1) - offsetPos;
+
+				if (listener == null) {
+					listener = bigFileProgressListener;
+				}
+				if (listener != null) {
+					float progress = (float) offsetPos / (float) endPosition;
+					listener.onProgress(pointerList, progress, offsetPos, startPosition, endPosition);
+				}
+
+				if (bytesRemain == byteShiftForSearch) {
+
+					if (listener == null) {
+						listener = bigFileProgressListener;
+					}
+					if (listener != null) {
+						float progress = 1.0f;
+						listener.onProgress(pointerList, progress, offsetPos, startPosition, endPosition);
+					}
+
+					break;
+				}
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (readChannel != null) {
+				try {
+					readChannel.close();
+				} catch (IOException e) {
+				}
+			}
+
+		}
+
+		sort(pointerList);
+
+		return pointerList;
+	}
+
+	private List<Long> searchPartiallyUsingLegacy(File f, byte[] searchBytes, long startPosition, long maxSizeToRead, BinFileProgressListener listener) {
 
 		final List<Long> pointerList = new ArrayList<Long>();
 
@@ -244,14 +405,6 @@ public class BinFileSearcher {
 
 			final ByteBuffer nioByteBuf;
 
-			if (USE_NIO) {
-				if (USE_NIO_DIRECT_BUFFER) {
-					nioByteBuf = ByteBuffer.allocateDirect(bufferSize);
-				} else {
-					nioByteBuf = ByteBuffer.allocate(bufferSize);
-				}
-			}
-
 			if (searchBytes.length > bufferSize) {
 				throw new RuntimeException("The length of the target bytes is less than bufferSize.Please set more bigger bufferSize.");
 			}
@@ -264,29 +417,8 @@ public class BinFileSearcher {
 
 				final int actualBytesRead;
 
-				if (USE_NIO) {
-					FileChannel inChannel = raf.getChannel();
-
-					nioByteBuf.clear();
-					actualBytesRead = inChannel.read(nioByteBuf);
-
-					// if wrapped
-					if (nioByteBuf.hasArray()) {
-						byteBuf = nioByteBuf.array();
-					}
-					// if using direct buffer
-					else {
-						byteBuf = new byte[bufferSize];
-						// transfer bytes from nioByteBuf into byteBuf
-						nioByteBuf.rewind();
-						nioByteBuf.get(byteBuf);
-					}
-
-				} else {
-					byteBuf = new byte[bufferSize];
-					actualBytesRead = raf.read(byteBuf);
-
-				}
+				byteBuf = new byte[bufferSize];
+				actualBytesRead = raf.read(byteBuf);
 
 				final byte[] bufForSearch;
 
@@ -304,17 +436,8 @@ public class BinFileSearcher {
 
 					bytesRead = iValidReadingSize;
 
-					if (USE_NIO) {
+					System.arraycopy(byteBuf, 0, bufForSearch, 0, iValidReadingSize);
 
-						// set pos to first
-						nioByteBuf.rewind();
-
-						// transfer bytes from nioByteBuf into bufForSearch
-						nioByteBuf.get(bufForSearch, 0, iValidReadingSize);
-
-					} else {
-						System.arraycopy(byteBuf, 0, bufForSearch, 0, iValidReadingSize);
-					}
 				}
 
 				else {
@@ -322,19 +445,7 @@ public class BinFileSearcher {
 
 						bufForSearch = new byte[actualBytesRead];
 
-						if (USE_NIO) {
-
-							// set pos to first,set limit to pointer of
-							// bytesRead
-							nioByteBuf.flip();
-
-							// transfer bytes from nioByteBuf into bufForSearch
-							nioByteBuf.get(bufForSearch);
-
-						} else {
-							System.arraycopy(byteBuf, 0, bufForSearch, 0, actualBytesRead);
-
-						}
+						System.arraycopy(byteBuf, 0, bufForSearch, 0, actualBytesRead);
 					} else {
 						bufForSearch = byteBuf;
 					}

@@ -63,7 +63,7 @@ public class GenPerformanceReport {
 
 	private static final String TEXT = "hello world.";
 
-	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100 };
+	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100,250 };
 
 	public void execPerformanceTest() {
 
