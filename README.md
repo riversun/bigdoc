@@ -55,6 +55,10 @@ Core i7-2400 3.4GHz(8-Core) 512MB(heap)<br>
 - Please note
 The result is different depending on the environment of the Java ,Java version and compiler or runtime optimization.
 
+# More Details
+See javadoc as follows.
+
+https://riversun.github.io/javadoc/bigdoc/
 
 # Downloads
 ## maven
