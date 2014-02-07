@@ -5,7 +5,7 @@
 
 	<groupId>org.riversun</groupId>
 	<artifactId>bigdoc</artifactId>
-	<version>0.2.0</version>
+	<version>0.3.0</version>
 	<packaging>jar</packaging>
 	<name>bigdoc</name>
 	<description>This library allows you to handle gigabyte order huge files easily with high performance. You can search bytes or words / read data/text from huge files.
