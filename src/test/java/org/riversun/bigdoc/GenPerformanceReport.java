@@ -66,7 +66,7 @@ public class GenPerformanceReport {
 
 	private static final String TEXT = "hello world.";
 
-	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100, 250, 1*1024,5*1024,10*1024 };
+	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 10, 50, 100, 250, 1 * 1024, 5 * 1024, 10 * 1024 };
 
 	public void execPerformanceTest() {
 
@@ -83,7 +83,7 @@ public class GenPerformanceReport {
 
 			log("Testing... " + sizeMB + "MB " + srcFile);
 			List<Long> searchBigFile = obj.searchBigFile(srcFile, searchBytes);
-			boolean is_result_correct = searchBigFile.size() == (1 + sizeMB * 1024 * 1024 / (5 * 1024 * 1024));
+			boolean is_result_correct = searchBigFile.size() == (1 + sizeMB * 1024 * 1024 / (10 * 1024 * 1024));
 			log("success =" + is_result_correct);
 			obj.setUseOptimization(true);
 			log("Condition");
@@ -126,11 +126,7 @@ public class GenPerformanceReport {
 
 		final byte[] buffer;
 
-		if (fileSizeMB < 10) {
-			buffer = new byte[fileSizeMB * 1024 * 1024];
-		} else {
-			buffer = new byte[10 * 1024 * 1024];
-		}
+		buffer = new byte[10 * 1024 * 1024];
 
 		BinaryUtil.memcopy(buffer, testBinary, 0);
 
