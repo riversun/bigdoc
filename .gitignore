@@ -16,5 +16,5 @@ build
 # for  mac
 .DS_Store
 
-
+/bin/
 /examples/
