@@ -23,12 +23,14 @@
  */
 package org.riversun.bigdoc;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 import org.riversun.bigdoc.bin.BigFileSearcher;
@@ -64,7 +66,7 @@ public class GenPerformanceReport {
 
 	private static final String TEXT = "hello world.";
 
-	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100, 250, 1000 };
+	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 5, 10, 50, 100, 250, 1000, 2500, 5000, 10000 };
 
 	public void execPerformanceTest() {
 
@@ -82,7 +84,7 @@ public class GenPerformanceReport {
 			log("Testing... " + sizeMB + "MB " + srcFile);
 			List<Long> searchBigFile = obj.searchBigFile(srcFile, searchBytes);
 			boolean is_result_correct = searchBigFile.size() == (1 + sizeMB * 1024 * 1024 / (5 * 1024 * 1024));
-			log("success ="+is_result_correct);
+			log("success =" + is_result_correct);
 			obj.setUseOptimization(true);
 			log("Condition");
 			obj._showProfile();
@@ -117,25 +119,26 @@ public class GenPerformanceReport {
 	}
 
 	private void createTestDataFile(File file, int fileSizeMB, byte[] testBinary) {
-
 		if (file.isFile() && file.exists()) {
 			return;
 		}
-		FileOutputStream fos = null;
-		BufferedOutputStream bos = null;
-
-		final long fileSize = fileSizeMB * 1024 * 1024;
+		final long fileSize = (long) fileSizeMB * 1024L * 1024L;
 
 		final byte[] buffer;
 
-		buffer = new byte[5 * 1024 * 1024];
+		if (fileSizeMB < 10) {
+			buffer = new byte[fileSizeMB * 1024 * 1024];
+		} else {
+			buffer = new byte[10 * 1024 * 1024];
+		}
 
 		BinaryUtil.memcopy(buffer, testBinary, 0);
 
+		FileChannel writeChannel = null;
 		try {
 
-			fos = new FileOutputStream(file);
-			bos = new BufferedOutputStream(fos);
+			writeChannel = FileChannel.open(Paths.get(file.getAbsolutePath()), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
 			for (long i = 0; i < fileSize; i += buffer.length) {
 
 				// place text at last
@@ -143,8 +146,10 @@ public class GenPerformanceReport {
 					BinaryUtil.memcopy(buffer, testBinary, buffer.length - testBinary.length);
 				}
 
-				bos.write(buffer);
-				bos.flush();
+				ByteBuffer bb = ByteBuffer.wrap(buffer);
+				bb.rewind();
+				writeChannel.write(bb);
+
 			}
 
 		} catch (FileNotFoundException e) {
@@ -155,16 +160,9 @@ public class GenPerformanceReport {
 
 		} finally {
 
-			if (bos != null) {
+			if (writeChannel != null) {
 				try {
-					bos.close();
-				} catch (IOException e) {
-				}
-			}
-
-			if (fos != null) {
-				try {
-					fos.close();
+					writeChannel.close();
 				} catch (IOException e) {
 				}
 			}
