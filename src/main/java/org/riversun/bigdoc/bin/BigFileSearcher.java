@@ -65,6 +65,7 @@ public class BigFileSearcher {
 	 * (default is true)
 	 * 
 	 * @param enabled
+	 *            optimization enabled or not
 	 */
 	public void setUseOptimization(boolean enabled) {
 		this.useOptimization = enabled;
@@ -113,6 +114,7 @@ public class BigFileSearcher {
 	 * turn off the optimization.<br>
 	 * 
 	 * @param blockSize
+	 *            size per unit when divide loading big sized file
 	 */
 	public void setBlockSize(long blockSize) {
 		this.blockSize = blockSize;
@@ -124,6 +126,7 @@ public class BigFileSearcher {
 	 * turn off the optimization.<br>
 	 * 
 	 * @param bufferSize
+	 *            size(byte) to be read into memory at one search operation
 	 */
 	public void setBufferSizePerWorker(int bufferSize) {
 		this.bufferSizePerWorker = bufferSize;
@@ -137,6 +140,7 @@ public class BigFileSearcher {
 	 * turn off the optimization.<br>
 	 * 
 	 * @param maxNumOfThreads
+	 *            number of threads(concurrency)
 	 */
 	public void setMaxNumOfThreads(int maxNumOfThreads) {
 		this.maxNumOfThreads = maxNumOfThreads;
@@ -148,6 +152,7 @@ public class BigFileSearcher {
 	 * turn off the optimization.<br>
 	 * 
 	 * @param subThreadSize
+	 *            number of threads for sub threads(concurrency)
 	 */
 	public void setSubThreadSize(int subThreadSize) {
 		this.subThreadSize = subThreadSize;
@@ -159,6 +164,7 @@ public class BigFileSearcher {
 	 * turn off the optimization.<br>
 	 * 
 	 * @param subBufferSize
+	 *            size(bytes) of the window
 	 */
 	public void setSubBufferSize(int subBufferSize) {
 		this.subBufferSize = subBufferSize;
@@ -169,7 +175,9 @@ public class BigFileSearcher {
 	 * specified substring.
 	 * 
 	 * @param f
+	 *            target file
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @return
 	 */
 	public Long indexOf(File f, byte[] searchBytes) {
@@ -200,12 +208,15 @@ public class BigFileSearcher {
 	 * inferior to #searchBigFile,so the execution speed is slower than
 	 * #searchBigFile
 	 * 
-	 * @param srcFile
+	 * @param f
+	 *            targetFile
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @param listener
+	 *            callback for progress and realtime result
 	 */
-	public List<Long> searchBigFileRealtime(File srcFile, byte[] searchBytes, OnRealtimeResultListener listener) {
-		return searchBigFileRealtime(srcFile, searchBytes, 0, listener);
+	public List<Long> searchBigFileRealtime(File f, byte[] searchBytes, OnRealtimeResultListener listener) {
+		return searchBigFileRealtime(f, searchBytes, 0, listener);
 	}
 
 	/**
@@ -215,24 +226,28 @@ public class BigFileSearcher {
 	 * inferior to #searchBigFile,so the execution speed is slower than
 	 * #searchBigFile
 	 * 
-	 * @param srcFile
+	 * @param f
+	 *            targetFile
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @param startPosition
+	 *            starting position
 	 * @param listener
+	 *            callback for progress and realtime result
 	 * @return
 	 */
-	public List<Long> searchBigFileRealtime(File srcFile, byte[] searchBytes, long startPosition, OnRealtimeResultListener listener) {
+	public List<Long> searchBigFileRealtime(File f, byte[] searchBytes, long startPosition, OnRealtimeResultListener listener) {
 
 		this.onRealtimeResultListener = listener;
 		this.onProgressListener = null;
 
-		int numOfThreadsOptimized = (int) (srcFile.length() / blockSize);
+		int numOfThreadsOptimized = (int) (f.length() / blockSize);
 
 		if (numOfThreadsOptimized == 0) {
 			numOfThreadsOptimized = 1;
 		}
 
-		final long fileLen = srcFile.length();
+		final long fileLen = f.length();
 
 		// optimize before calling the method
 		optimize(fileLen);
@@ -240,52 +255,62 @@ public class BigFileSearcher {
 		setMaxNumOfThreads(1);
 		setBlockSize(fileLen);
 
-		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, false, startPosition);
+		return searchBigFile(f, searchBytes, numOfThreadsOptimized, false, startPosition);
 	}
 
 	/**
 	 * Search bytes from big file faster in a concurrent processing with
 	 * progress callback
 	 * 
-	 * @param srcBytes
+	 * @param f
+	 *            target file
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @return
 	 */
-	public List<Long> searchBigFile(File srcFile, byte[] searchBytes) {
-		return searchBigFile(srcFile, searchBytes, null);
+	public List<Long> searchBigFile(File f, byte[] searchBytes) {
+		return searchBigFile(f, searchBytes, null);
 	}
 
 	/**
 	 * Search bytes from big file faster in a concurrent processing with
 	 * progress callback
 	 * 
-	 * @param srcFile
+	 * @param f
+	 *            target file
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @param listener
+	 *            callback for progress
 	 * @return
 	 */
-	public List<Long> searchBigFile(File srcFile, byte[] searchBytes, OnProgressListener listener) {
+	public List<Long> searchBigFile(File f, byte[] searchBytes, OnProgressListener listener) {
 
 		this.onRealtimeResultListener = null;
 		this.onProgressListener = listener;
 
-		int numOfThreadsOptimized = (int) (srcFile.length() / (long) blockSize);
+		int numOfThreadsOptimized = (int) (f.length() / (long) blockSize);
 
 		if (numOfThreadsOptimized == 0) {
 			numOfThreadsOptimized = 1;
 		}
 
-		return searchBigFile(srcFile, searchBytes, numOfThreadsOptimized, this.useOptimization, 0);
+		return searchBigFile(f, searchBytes, numOfThreadsOptimized, this.useOptimization, 0);
 	}
 
 	/**
 	 * Search bytes faster in a concurrent processing with concurrency level.
 	 * 
 	 * @param srcFile
+	 *            target file
 	 * @param searchBytes
+	 *            sequence of bytes you want to search
 	 * @param numOfThreads
+	 *            number of threads
 	 * @param useOptimization
+	 *            use optimization or not
 	 * @param startPosition
+	 *            starting position
 	 * @return
 	 */
 	private List<Long> searchBigFile(File srcFile, byte[] searchBytes, int numOfThreads, boolean useOptimization, long startPosition) {
