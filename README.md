@@ -57,6 +57,30 @@ Please Note
 - Processing speed depends on the number of CPU Cores(included hyper threading) not memory capacity.
 - The result is different depending on the environment of the Java ,Java version and compiler or runtime optimization.
 
+# Architecture and Tuning
+
+![architecture](https://riversun.github.io/img/bigdoc_how_to_tune.png
+ "architecture")
+
+You can tune the performance using the following methods.
+It can be adjusted according to the number of CPU cores and memory capacity.
+
+- BigFileSearcher#setBlockSize
+- BigFileSearcher#setMaxNumOfThreads
+- BigFileSearcher#setBufferSizePerWorker
+- BigFileSearcher#setBufferSize
+- BigFileSearcher#setSubThreadSize
+
+BigFileSearcher can search for sequence of bytes by dividing a big file into multiple blocks.
+Use multiple workers to search for multiple blocks concurrently.
+One worker thread sequentially searches for one block.
+The number of workers is specified by #setMaxNumOfThreads.
+Within a single worker thread, it reads and searches into the memory by the capacity specified by #setBufferSize.
+A small area - used to compare sequence of bytes when searching - is called a window, and the size of that window is specified by #setSubBufferSize.
+Multiple windows can be operated concurrently, and the number of conccurent operations in a worker is specified by #setSubThreadSize.
+
+
+
 # More Details
 See javadoc as follows.
 
