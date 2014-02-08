@@ -66,7 +66,10 @@ public class GenPerformanceReport {
 
 	private static final String TEXT = "hello world.";
 
-	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 10, 50, 100, 250, 1 * 1024, 5 * 1024, 10 * 1024 };
+	private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 10, 50, 100, 250 };
+	
+	//if you want to perform test for big data,uncomment.
+	//private static final int[] TEST_SIZE_MEGA_BYTES_ARRAY = new int[] { 10, 50, 100, 250, 1 * 1024, 5 * 1024, 10 * 1024 };
 
 	public void execPerformanceTest() {
 
@@ -74,7 +77,7 @@ public class GenPerformanceReport {
 
 		final byte[] searchBytes = getFromUTF8(searchText);
 
-		final BigFileSearcher obj = new BigFileSearcher();
+		
 		log("--------------------");
 
 		for (int sizeMB : TEST_SIZE_MEGA_BYTES_ARRAY) {
@@ -82,6 +85,7 @@ public class GenPerformanceReport {
 			final File srcFile = new File(getTestDataFilePath(sizeMB));
 
 			log("Testing... " + sizeMB + "MB " + srcFile);
+			final BigFileSearcher obj = new BigFileSearcher();
 			List<Long> searchBigFile = obj.searchBigFile(srcFile, searchBytes);
 			boolean is_result_correct = searchBigFile.size() == (1 + sizeMB * 1024 * 1024 / (10 * 1024 * 1024));
 			log("success =" + is_result_correct);
