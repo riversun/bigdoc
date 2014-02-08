@@ -42,7 +42,7 @@ Tested on AWS t2.*<br>
 ### Results
 <table>
 <tr><td>CPU Instance</td> <td>EC2 t2.2xlarge<br>vCPU x 8,32GiB</td>  <td>EC2 t2.xlarge<br>vCPU x 4,16GiB</td><td>EC2 t2.large<br>vCPU x 2,8GiB</td><td>EC2 t2.medium<br>vCPU x 2,4GiB</td>         </tr>
-<tr><td>File Size</td>    <td>Time(sec)</td>                              <td>Time(sec)</td>                           <td>Time(sec)</td>                         <td>Time</td>                                    </tr>
+<tr><td>File Size</td>    <td>Time(sec)</td>                              <td>Time(sec)</td>                           <td>Time(sec)</td>                         <td>Time(sec)</td>                                    </tr>
 <tr><td>10MB</td>         <td>0.5s</td>                              <td>0.6s</td>                           <td>0.8s</td>                         <td>0.8s</td>                                     </tr>
 <tr><td>50MB</td>         <td>2.8s</td>                              <td>5.9s</td>                           <td>13.4s</td>                        <td>12.8s</td>                                       </tr>
 <tr><td>100MB</td>        <td>5.4s</td>                              <td>10.7s</td>                          <td>25.9s</td>                        <td>25.1s</td>                                        </tr>
