@@ -36,6 +36,66 @@ public class Example {
 	}
 }
 ```
+
+cancellation
+
+```
+package org.riversun.bigdoc.bin;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import org.riversun.bigdoc.bin.BigFileSearcher.OnRealtimeResultListener;
+
+public class Test {
+
+  public static void main(String[] args) throws UnsupportedEncodingException, InterruptedException {
+    byte[] searchBytes = "sometext".getBytes("UTF-8");
+    
+    File file = new File("path/to/file");
+
+    final BigFileSearcher searcher = new BigFileSearcher();
+
+    searcher.setUseOptimization(true);
+    searcher.setSubBufferSize(256);
+    searcher.setSubThreadSize(Runtime.getRuntime().availableProcessors());
+
+    final SearchCondition sc = new SearchCondition();
+    
+    sc.srcFile = file;
+    sc.startPosition = 1780 * 1024 * 1024;
+    sc.searchBytes = searchBytes;
+
+    sc.onRealtimeResultListener = new OnRealtimeResultListener() {
+
+      @Override
+      public void onRealtimeResultListener(float progress, List<Long> pointerList) {
+        System.out.println("progress:" + progress + " pointerList:" + pointerList);
+      }
+    };
+
+    final Thread th = new Thread(new Runnable() {
+
+      @Override
+      public void run() {
+        List<Long> searchBigFileRealtime = searcher.searchBigFile(sc);
+      }
+    });
+
+    th.start();
+
+    Thread.sleep(1500);
+
+    searcher.cancel();
+
+    th.join();
+
+  }
+}
+
+```
+
 ## Performance Test
 Search sequence of bytes from big file
 
