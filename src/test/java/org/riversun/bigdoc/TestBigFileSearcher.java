@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.riversun.bigdoc.bin.BigFileSearcher;
+import org.riversun.bigdoc.bin.SearchCondition;
 import org.riversun.bigdoc.bin.BigFileSearcher.OnProgressListener;
 import org.riversun.bigdoc.bin.BigFileSearcher.OnRealtimeResultListener;
 
@@ -157,9 +158,50 @@ public class TestBigFileSearcher extends TestBase {
 			}
 		});
 		obj._showProfile();
+		
 		assertThat(result, contains(2045952L, 3068928L, 4091904L, 5114880L, 5242863L));
 		System.out.println("[" + name.getMethodName() + "] ellapsed " + String.format("%.1f sec", ((float) obj.getEllapsedMillis() / (float) 1024)) +
 				" for " + srcFile.length() / (1024 * 1024) + " mbytes");
 		System.out.println();
+	}
+	
+	@Test
+	public void test_cancel() throws InterruptedException {
+    final String searchText = "hello world.";
+    final long startPos = 2040000L;
+    final byte[] searchBytes = getFromUTF8(searchText);
+
+    final BigFileSearcher obj = new BigFileSearcher();
+
+    final File srcFile = getFileFromResource("bigdoc_bigfile_test_5mbyte.bin");
+
+    System.out.println("[" + name.getMethodName() + "] Profile Information");
+
+    final BigFileSearcher searcher = new BigFileSearcher();
+
+    searcher.setUseOptimization(true);
+    searcher.setSubBufferSize(256);
+    searcher.setSubThreadSize(Runtime.getRuntime().availableProcessors());
+
+    final SearchCondition sc = new SearchCondition();
+    sc.srcFile = srcFile;
+    sc.startPosition =startPos;
+    sc.searchBytes = searchBytes;
+
+   
+
+    final Thread th = new Thread(new Runnable() {
+
+      @Override
+      public void run() {
+        List<Long> searchBigFileRealtime = searcher.searchBigFile(sc);
+      }
+    });
+
+    th.start();
+
+    Thread.sleep(500);
+    searcher.cancel();
+    th.join();
 	}
 }
