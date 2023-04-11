@@ -87,8 +87,8 @@
 
 				<configuration>
 
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.8</source>
+					<target>1.8</target>
 
 					<excludes>
 						<exclude>examples/**/*</exclude>
@@ -135,7 +135,7 @@
 				</executions>
 				<configuration>
 					<author>true</author>
-					<source>1.5</source>
+					<source>1.8</source>
 					<show>protected</show>
 					<encoding>UTF-8</encoding>
 					<charset>UTF-8</charset>
