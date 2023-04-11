@@ -37,9 +37,11 @@ public class Example {
 }
 ```
 
-cancellation
+## Example code for canceling a search in progress
 
-```
+When used asynchronously, #cancel can be used to stop the process in the middle of a search.
+
+```java
 package org.riversun.bigdoc.bin;
 
 import java.io.File;
@@ -48,7 +50,7 @@ import java.util.List;
 
 import org.riversun.bigdoc.bin.BigFileSearcher.OnRealtimeResultListener;
 
-public class Test {
+public class Example {
 
   public static void main(String[] args) throws UnsupportedEncodingException, InterruptedException {
     byte[] searchBytes = "sometext".getBytes("UTF-8");
@@ -64,7 +66,7 @@ public class Test {
     final SearchCondition sc = new SearchCondition();
     
     sc.srcFile = file;
-    sc.startPosition = 1780 * 1024 * 1024;
+    sc.startPosition = 0;
     sc.searchBytes = searchBytes;
 
     sc.onRealtimeResultListener = new OnRealtimeResultListener() {
@@ -153,9 +155,10 @@ https://riversun.github.io/javadoc/bigdoc/
 ## maven
 - You can add dependencies to maven pom.xml file.
 ```xml
+
 <dependency>
-  <groupId>org.riversun</groupId>
-  <artifactId>bigdoc</artifactId>
-  <version>0.3.0</version>
+    <groupId>org.riversun</groupId>
+    <artifactId>bigdoc</artifactId>
+    <version>0.4.0</version>
 </dependency>
 ```
